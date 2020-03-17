@@ -7,7 +7,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
 import java.net.URL;
 
@@ -33,13 +32,11 @@ public class APIRequest {
 
     public APIResult execute() throws APIException {
         return execute(new HashMap<>());
-    };
+    }
 
     public APIResult execute(Map<String, Object> params) throws APIException {
-        // extraParams are one-time params for this call,
-        // so that the APIRequest can be reused later on.
         String apiUrl = getApiUrl();
-        ResponseWrapper response = null;
+        ResponseWrapper response;
         try {
             context.log("========Start of API Call========");
             if ("GET".equals(method)) response = sendGet(apiUrl, params, context);
@@ -53,11 +50,11 @@ public class APIRequest {
             throw new APIException.FailedRequestException(e);
         }
         return APIResult.parse(context, response.getBody());
-    };
+    }
 
     public ResponseWrapper sendGet(String apiUrl, Map<String, Object> allParams, APIContext context) throws APIException, IOException {
         allParams = prepareParams(allParams);
-        URL url = new URL(RequestHelper.constructUrlString(apiUrl, allParams));
+        URL url = new URL(constructUrlString(apiUrl, allParams));
         context.log("Request:");
         context.log("GET: " + url.toString());
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -111,7 +108,7 @@ public class APIRequest {
     public ResponseWrapper sendDelete(String apiUrl, Map<String, Object> allParams, APIContext context) throws APIException, IOException {
         allParams = prepareParams(allParams);
 
-        URL url = new URL(RequestHelper.constructUrlString(apiUrl, allParams));
+        URL url = new URL(constructUrlString(apiUrl, allParams));
         context.log("Delete: " + url.toString());
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
@@ -145,83 +142,17 @@ public class APIRequest {
         return allParams;
     }
 
-    public static class RequestHelper {
-        private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
-        public static Map<String, String> fileToContentTypeMap = new HashMap<String, String>();
-        static {
-            fileToContentTypeMap.put(".atom", "application/atom+xml");
-            fileToContentTypeMap.put(".rss", "application/rss+xml");
-            fileToContentTypeMap.put(".xml", "application/xml");
-            fileToContentTypeMap.put(".csv", "text/csv");
-            fileToContentTypeMap.put(".txt", "text/plain");
+    public static String constructUrlString(String apiUrl, Map<String, Object> allParams) {
+        StringBuilder urlString = new StringBuilder(apiUrl);
+        boolean firstEntry = true;
+        for (Map.Entry<String, Object> entry : allParams.entrySet()) {
+            urlString.append(firstEntry ? "?" : "&").append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8)).append("=").append(URLEncoder.encode(Utils.convertToString(entry.getValue()), StandardCharsets.UTF_8));
+            firstEntry = false;
         }
-
-        public static String getContentTypeForFile(File file) {
-            String contentType = fileToContentTypeMap.get(getFileExtension(file));
-
-            if (contentType != null) return contentType;
-
-            try {
-                contentType = Files.probeContentType(file.toPath());
-            } catch (IOException ignored) {
-            }
-
-            return contentType != null ? contentType : DEFAULT_CONTENT_TYPE;
-        }
-
-        private static String getFileExtension(File file) {
-            String fileName = file.getName();
-            int index = fileName.lastIndexOf('.');
-            if (index == -1) return "";
-            return fileName.substring(index, fileName.length());
-        }
-
-        public static int getContentLength(Map<String, Object> allParams, String boundary, APIContext context) throws IOException {
-            int contentLength = 0;
-            for (Map.Entry entry : allParams.entrySet()) {
-                contentLength += ("--" + boundary + "\r\n").length();
-                if (entry.getValue() instanceof File) {
-                    File file = (File) entry.getValue();
-                    String contentType = getContentTypeForFile(file);
-                    contentLength += getLengthAndLog(context, "Content-Disposition: form-data; name=\"" + entry.getKey() + "\"; filename=\"" + file.getName() + "\"\r\n");
-                    if (contentType != null) {
-                        contentLength += getLengthAndLog(context, "Content-Type: " + contentType + "\r\n");
-                    }
-                    contentLength += getLengthAndLog(context, "\r\n");
-                    contentLength += file.length();
-                    contentLength += getLengthAndLog(context, "\r\n");
-                } else if (entry.getValue() instanceof byte[]) {
-                    byte[] bytes = (byte[]) entry.getValue();
-                    contentLength += getLengthAndLog(context, "Content-Disposition: form-data; name=\"" + entry.getKey() + "\"; filename=\"" + "chunkfile" + "\"\r\n");
-                    contentLength += bytes.length;
-                    contentLength += getLengthAndLog(context, "\r\n");
-                } else {
-                    contentLength += getLengthAndLog(context, "Content-Disposition: form-data; name=\"" + entry.getKey() + "\"\r\n\r\n");
-                    contentLength += getLengthAndLog(context, Utils.convertToString(entry.getValue()));
-                    contentLength += getLengthAndLog(context, "\r\n");
-                }
-            }
-            contentLength += getLengthAndLog(context, "--" + boundary + "--\r\n");
-            return contentLength;
-        }
-
-        private static int getLengthAndLog(APIContext context, String input) throws IOException {
-            context.log(input);
-            return input.getBytes(StandardCharsets.UTF_8).length;
-        }
-
-        public static String constructUrlString(String apiUrl, Map<String, Object> allParams) throws IOException {
-            StringBuilder urlString = new StringBuilder(apiUrl);
-            boolean firstEntry = true;
-            for (Map.Entry entry : allParams.entrySet()) {
-                urlString.append((firstEntry ? "?" : "&") + URLEncoder.encode(entry.getKey().toString(), StandardCharsets.UTF_8) + "=" + URLEncoder.encode(Utils.convertToString(entry.getValue()), StandardCharsets.UTF_8));
-                firstEntry = false;
-            }
-            return urlString.toString();
-        }
+        return urlString.toString();
     }
 
-    private static ResponseWrapper readResponse(HttpURLConnection con) throws APIException, IOException {
+    private static ResponseWrapper readResponse(HttpURLConnection con) throws APIException {
         try {
             String header = Utils.convertToString(con.getHeaderFields());
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
