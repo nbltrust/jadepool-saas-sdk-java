@@ -142,7 +142,7 @@ public class APIRequest {
         return allParams;
     }
 
-    public static String constructUrlString(String apiUrl, Map<String, Object> allParams) {
+    public static String constructUrlString(String apiUrl, Map<String, Object> allParams) throws IOException {
         StringBuilder urlString = new StringBuilder(apiUrl);
         boolean firstEntry = true;
         for (Map.Entry<String, Object> entry : allParams.entrySet()) {
