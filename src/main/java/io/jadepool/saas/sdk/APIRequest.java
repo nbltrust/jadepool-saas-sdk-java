@@ -146,7 +146,7 @@ public class APIRequest {
         StringBuilder urlString = new StringBuilder(apiUrl);
         boolean firstEntry = true;
         for (Map.Entry<String, Object> entry : allParams.entrySet()) {
-            urlString.append(firstEntry ? "?" : "&").append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8)).append("=").append(URLEncoder.encode(Utils.convertToString(entry.getValue()), StandardCharsets.UTF_8));
+            urlString.append(firstEntry ? "?" : "&").append(URLEncoder.encode(entry.getKey(), "UTF-8")).append("=").append(URLEncoder.encode(Utils.convertToString(entry.getValue()), "UTF-8"));
             firstEntry = false;
         }
         return urlString.toString();
