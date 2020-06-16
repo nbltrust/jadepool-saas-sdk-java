@@ -32,11 +32,19 @@ public class APIResult {
         return sign.equals(Utils.hmacSHA256(Utils.serializeJSON(data), context.getAppSecret()));
     }
 
+    public void resetSign() {
+        sign = Utils.hmacSHA256(Utils.serializeJSON(data), context.getAppSecret());
+    }
+
     public String getMessage() {
         return message;
     }
 
     public JsonElement getData() {
         return data;
+    }
+
+    public void setData(JsonElement newData) {
+        data = newData;
     }
 }

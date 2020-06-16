@@ -3,9 +3,13 @@ package io.jadepool.saas.sdk;
 import com.google.gson.*;
 import org.apache.commons.codec.binary.Hex;
 
+import javax.crypto.Cipher;
 import javax.crypto.Mac;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.*;
 
 public class Utils {
@@ -84,5 +88,48 @@ public class Utils {
         } else {
             return input.toString();
         }
+    }
+
+    public static String aesEncrypt(String plainText, String key, byte[] iv) throws Exception {
+        byte[] clean = plainText.getBytes();
+
+        int ivSize = 16;
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+
+        // Hashing key.
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        digest.update(key.getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes = new byte[32];
+        System.arraycopy(digest.digest(), 0, keyBytes, 0, keyBytes.length);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(keyBytes, "AES");
+
+        // Encrypt.
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
+        byte[] encrypted = cipher.doFinal(clean);
+
+        return Base64.getEncoder().encodeToString(encrypted);
+    }
+
+    public static String aesDecrypt(String encrypted, String key, byte[] iv) throws Exception {
+        int keySize = 32;
+
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+
+        byte[] encryptedBytes = Base64.getDecoder().decode(encrypted);
+
+        // Hash key.
+        byte[] keyBytes = new byte[keySize];
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(key.getBytes());
+        System.arraycopy(md.digest(), 0, keyBytes, 0, keyBytes.length);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(keyBytes, "AES");
+
+        // Decrypt.
+        Cipher cipherDecrypt = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipherDecrypt.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
+        byte[] decrypted = cipherDecrypt.doFinal(encryptedBytes);
+
+        return new String(decrypted);
     }
 }

@@ -40,7 +40,8 @@ public class APIRequest {
         try {
             context.log("========Start of API Call========");
             if ("GET".equals(method)) response = sendGet(apiUrl, params, context);
-            else if ("POST".equals(method)) response = sendPost(apiUrl, params, context);
+            else if ("POST".equals(method)) response = sendPost("POST", apiUrl, params, context);
+            else if ("PUT".equals(method)) response = sendPost("PUT", apiUrl, params, context);
             else if ("DELETE".equals(method)) response = sendDelete(apiUrl, params, context);
             else throw new IllegalArgumentException("Unsupported http method. Currently only GET, POST, and DELETE are supported");
             context.log("Response:");
@@ -69,14 +70,14 @@ public class APIRequest {
         return readResponse(con);
     }
 
-    public ResponseWrapper sendPost(String apiUrl, Map<String, Object> allParams, APIContext context) throws APIException, IOException {
+    public ResponseWrapper sendPost(String method, String apiUrl, Map<String, Object> allParams, APIContext context) throws APIException, IOException {
         allParams = prepareParams(allParams);
 
         URL url = new URL(apiUrl);
-        context.log("Post: " + url.toString());
+        context.log(method + ": " + url.toString());
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
-        con.setRequestMethod("POST");
+        con.setRequestMethod(method);
         con.setRequestProperty("User-Agent", USER_AGENT);
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             con.setRequestProperty(entry.getKey(), entry.getValue());
