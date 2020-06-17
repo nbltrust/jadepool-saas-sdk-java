@@ -7,6 +7,7 @@ import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -50,7 +51,19 @@ public class Utils {
         StringBuilder urlString = new StringBuilder();
         boolean firstEntry = true;
         for (Map.Entry<String, Object> entry : sorted.entrySet()) {
-            urlString.append(firstEntry ? "" : "&").append(entry.getKey()).append("=").append(convertToString(entry.getValue()));
+            String value;
+            if (entry.getValue().getClass().isArray()) {
+                TreeMap<String, Object> keyVals = new TreeMap<String, Object>();
+                Object array = entry.getValue();
+                int length = Array.getLength(array);
+                for (int i = 0; i < length; i++) {
+                    keyVals.put(String.valueOf(i), Array.get(array, i));
+                }
+                value = serialize(keyVals);
+            } else {
+                value = convertToString(entry.getValue());
+            }
+            urlString.append(firstEntry ? "" : "&").append(entry.getKey()).append("=").append(value);
             firstEntry = false;
         }
 

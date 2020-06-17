@@ -7,6 +7,12 @@ public class App extends API {
         this.context = context;
     }
 
+    public APIResult getAddress(String coinName) throws APIException {
+        return new APIRequest(context, "/api/v1/address/" + coinName, "GET", new HashMap<String, String>() {{
+            put("X-App-Key", context.getAppKey());
+        }}).execute();
+    }
+
     public APIResult createAddress(String coinName) throws APIException {
         return createAddressWithMode(coinName, "");
     }
@@ -24,6 +30,20 @@ public class App extends API {
             put("X-App-Key", context.getAppKey());
         }}).execute(new HashMap<String, Object>() {{
             put("address", address);
+        }});
+    }
+
+    public APIResult getBalances() throws APIException {
+        return new APIRequest(context, "/api/v1/app/balances", "GET", new HashMap<String, String>() {{
+            put("X-App-Key", context.getAppKey());
+        }}).execute();
+    }
+
+    public APIResult addAppAssets(String[] coinNames) throws APIException {
+        return new APIRequest(context, "/api/v1/app/assets", "POST", new HashMap<String, String>() {{
+            put("X-App-Key", context.getAppKey());
+        }}).execute(new HashMap<String, Object>() {{
+            put("coinNames", coinNames);
         }});
     }
 
@@ -57,6 +77,15 @@ public class App extends API {
             put("value", value);
             put("memo", memo);
             put("id", id);
+        }});
+    }
+
+    public APIResult getOrders(int page, int amount) throws APIException {
+        return new APIRequest(context, "/api/v1/app/orders", "GET", new HashMap<String, String>() {{
+            put("X-App-Key", context.getAppKey());
+        }}).execute(new HashMap<String, Object>() {{
+            put("page", page);
+            put("amount", amount);
         }});
     }
 
@@ -106,5 +135,11 @@ public class App extends API {
         }}).execute(new HashMap<String, Object>() {{
             put("date", date);
         }});
+    }
+
+    public APIResult getMarket(String coinName) throws APIException {
+        return new APIRequest(context, "/api/v1/market/" + coinName, "GET", new HashMap<String, String>() {{
+            put("X-App-Key", context.getAppKey());
+        }}).execute();
     }
 }
