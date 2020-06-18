@@ -39,11 +39,11 @@ public class App extends API {
         }}).execute();
     }
 
-    public APIResult addAppAssets(String[] coinNames) throws APIException {
+    public APIResult addAppAsset(String coinName) throws APIException {
         return new APIRequest(context, "/api/v1/app/assets", "POST", new HashMap<String, String>() {{
             put("X-App-Key", context.getAppKey());
         }}).execute(new HashMap<String, Object>() {{
-            put("coinNames", coinNames);
+            put("coinName", coinName);
         }});
     }
 
