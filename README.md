@@ -1,5 +1,3 @@
-# jadepool-saas-sdk-java
-
 ## Quick Start
 ### Obtain An API KEY/SECRET
 Please visit your Wallet/Company Settings and get the API KEY/SECRET.
@@ -13,4 +11,4 @@ $ ./gradlew build
 The example project can be found in the `/examples` folder.
 
 ## Understanding the SDK
-Please see the [API Documentation](https://nbltrust.github.io/jadepool-saas-api-docs/) for more information.
+Please see the API Documentation for more information.
